@@ -8,21 +8,8 @@ define([
 
         'css!./css/master.css',
 
-        './lib/d3.v3.min'
-
-        /*
-        './lib/d3',
-        './lib/d3.min',
-        './lib/d3.v3',
-        'https://d3js.org/d3.v6.min.js',
-        'https://d3js.org/d3-array.v2.min.js',
-        'https://d3js.org/d3-color.v2.min.js',
-        'https://d3js.org/d3-format.v2.min.js',
-        'https://d3js.org/d3-interpolate.v2.min.js',
-        'https://d3js.org/d3-time.v2.min.js',
-        'https://d3js.org/d3-time-format.v3.min.js',
-        'https://d3js.org/d3-scale.v3.min.js'
-        */
+        './lib/d3.v3.min',
+        //'./lib/d3',
     ],
     function($, qlik, props) {
         'use strict';
@@ -33,31 +20,50 @@ define([
             definition: props,
             initialProperties: initial,
 
-
             //Paint resp.Rendering logic
             paint: function($element, layout) {
                 //Create hyperCube var
                 var hc = layout.qHyperCube;
                 var self = this;
 
-                //Empty the element
+                //get datas
+                var datasets = hc.qDataPages[0].qMatrix.map((d) => {
+                    return {
+                        "Dim": d[0].qText,
+                        "Dim_key": d[0].qElemNumber,
+                        "Value": d[1].qNum
+                    }
+                });
+
+                //sort datas
+                function compare_values(a, b) {
+                    if (a.Value < b.Value) {
+                        return -1;
+                    } else if (a.Value > b.Value) {
+                        return 1;
+                    } else {
+                        return 0;
+                    }
+                }
+                datasets.sort(compare_values);
+
+                //Empty the element at every event trigger
                 $element.empty();
 
-                var margin = { top: 20, right: 5, bottom: 40, left: 20 },
+                var margin = { top: 20, right: 5, bottom: 40, left: 50 },
                     width = $element.width() - margin.left - margin.right,
                     height = $element.height() - margin.top - margin.bottom;
 
                 var id = "container_" + layout.qInfo.qId;
-                //console.log("Width:", width, "Height:", height, "Id", id);
 
+                //check if #id already exists
                 if (document.getElementById(id)) {
                     $("#" + id).empty();
                 } else {
                     $element.append($('<div />;').attr("id", id));
                 }
 
-                var parseDate = d3.time.format("%Y-%m").parse;
-
+                //x & y
                 var x = d3.scale
                     .ordinal()
                     .rangeRoundBands([0, width], .05);
@@ -67,15 +73,13 @@ define([
 
                 var xAxis = d3.svg.axis()
                     .scale(x)
-                    .orient("bottom")
-                    //.tickFormat(d3.time.format("%Y-%m"));
-                console.log("xAxis:", xAxis);
-
+                    .orient("bottom");
                 var yAxis = d3.svg.axis()
                     .scale(y)
                     .orient("left")
                     .ticks(10);
 
+                //append svg
                 var svg = d3.select("#" + id).append("svg")
                     .attr("width", width + margin.left + margin.right)
                     .attr("height", height + margin.top + margin.bottom)
@@ -83,17 +87,11 @@ define([
                     .attr("transform",
                         "translate(" + margin.left + "," + margin.top + ")");
 
-                var data = [
-                    { date: 25, value: 53 },
-                    { date: 29, value: 63 },
-                    { date: 17, value: 73 },
-                    { date: 50, value: 83 },
-                    { date: 171, value: 93 }
-                ];
+                //set x/y domains
+                x.domain(datasets.map(function(d) { return d.Dim }));
+                y.domain([0, d3.max(datasets, function(d) { return d.Value })]);
 
-                x.domain(data.map(function(d) { return d.date; }));
-                y.domain([0, d3.max(data, function(d) { return d.value; })]);
-
+                //x axis
                 svg.append("g")
                     .attr("transform", "translate(0," + height + ")")
                     .call(xAxis)
@@ -104,7 +102,7 @@ define([
                     .attr("dy", "-.55em")
                     .attr("transform", "rotate(-90)");
 
-
+                //y axis
                 svg.append("g")
                     .attr("class", "y axis")
                     .call(yAxis)
@@ -113,21 +111,44 @@ define([
                     .attr("y", 6)
                     .attr("dy", ".71em")
                     .style("text-anchor", "end")
-                    .text("Value ($)");
+                    .text("Value");
 
+                var colors = [];
+                for (let i = 0; i < hc.qDimensionInfo[0].qCardinal; i++) {
+                    colors.push(
+                        hc.qDataPages[0].qMatrix[i][1].qAttrExps.qValues[0].qText)
+                }
+                console.log(colors);
+
+                //create bars
+                svg.selectAll("bar")
+                    .data(datasets)
+                    .enter()
+                    .append("rect")
+                    .style("fill", (d, i) => { return colors[i] })
+                    .attr("x", (d) => { return x(d.Dim); })
+                    .attr("width", x.rangeBand())
+                    .attr("y", (d) => { return y(d.Value); })
+                    .attr("height", (d) => { return height - y(d.Value); });
 
 
                 svg.selectAll("bar")
-                    .data(data)
-                    .enter().append("rect")
-                    .style("fill", "red")
-                    .attr("x", function(d) { return x(d.date); })
-                    .attr("width", x.rangeBand())
-                    .attr("y", function(d) { return y(d.value); })
-                    .attr("height", function(d) { return height - y(d.value); });
+                    .data(datasets)
+                    .enter().append("text")
+                    .style("fill", (d, i) => { return colors[i] })
+                    .attr("class", "bar")
+                    .attr("text-anchor", "left")
+                    .attr("x", function(d) { return x(d.Dim); })
+                    .attr("y", function(d) { return y(d.Value) - 5; })
+                    .text(function(d) { return d.Value; });
 
+                /*
+                svg.selectAll('rect').transition().duration(500).delay(500).style('opacity', '1');
+                svg.selectAll('.bar').transition().duration(500).delay(500).style('opacity', '1');
+                */
 
                 console.log("-------END-------");
+                qlik.resolve();
             }
         };
     });

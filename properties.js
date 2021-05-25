@@ -15,20 +15,20 @@ function getRandomColor() {
 
 
 define([],
-    function () {
+    function() {
         'use strict';
 
         //Dimensions - measures - sortings
         var dimensions = {
             uses: "dimensions",
-            min: 0,
-            max: 0
+            min: 1,
+            max: 1
         };
 
         var measures = {
             uses: "measures",
-            min: 0,
-            max: 0,
+            min: 1,
+            max: 2,
             items: {
                 colorazioneMisure: {
                     type: "string",
@@ -70,7 +70,7 @@ define([],
             }],
             defaultValue: true
         }
-         
+
         //Stack bars
         var checkStacked = {
             type: "boolean",
@@ -109,8 +109,7 @@ define([],
             component: "buttongroup",
             label: "Legend positioning",
             ref: "props.legend",
-            options: [
-                {
+            options: [{
                     value: "t",
                     label: "⬆",
                     tooltip: "Legend on top"
@@ -185,4 +184,3 @@ define([],
         };
 
     });
-
