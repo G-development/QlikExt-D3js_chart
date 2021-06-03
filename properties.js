@@ -28,9 +28,9 @@ define([],
         var measures = {
             uses: "measures",
             min: 1,
-            max: 2,
+            max: 4,
             items: {
-                colorazioneMisure: {
+                measuresColor: {
                     type: "string",
                     ref: "qAttributeExpressions.0.qExpression",
                     label: "Colorazione",
@@ -45,15 +45,6 @@ define([],
             uses: "sorting"
         }
 
-        //myText
-        /*
-        var myText = {
-            ref: "prop.myText",
-            type: "string",
-            label: "Insert text",
-            defaultValue: "#3C887E"
-        }
-        */
 
         //Grid
         var checkGrid = {

@@ -1,0 +1,9 @@
+{
+    "name" : "Chart w/D3.js",
+    "description" : "v0.1",
+    "icon" : "bar-chart-vertical",
+    "preview" : "d3logo.png",
+    "type" : "visualization",
+    "version": "0.3",
+    "author": "Giovanni Cuozzo"
+}
